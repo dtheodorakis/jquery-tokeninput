@@ -341,7 +341,7 @@ $.TokenList = function (input, url_or_data, settings) {
     }
     if(li_data && li_data.length) {
         $.each(li_data, function (index, value) {
-            insert_token(value);
+            insert_token(value.id, value.name, value.img);
             checkTokenLimit();
         });
     }
@@ -356,8 +356,7 @@ $.TokenList = function (input, url_or_data, settings) {
             if ($(this).children("input").length === 0) {
                 delete_token($(this));
             }
-        });
-    }
+  
 
     this.add = function(item) {
         add_token(item);
@@ -412,8 +411,8 @@ $.TokenList = function (input, url_or_data, settings) {
     }
 
     // Inner function to a token to the list
-    function insert_token(item) {
-        var this_token = $("<li><p>"+ item.name +"</p></li>")
+    function insert_token(id, value, img) {
+        var this_token = $("<li>"+compose_img_link(img)+" <p>"+ value +"</p> </li>")
           .addClass(settings.classes.token)
           .insertBefore(input_token);
 
@@ -427,15 +426,15 @@ $.TokenList = function (input, url_or_data, settings) {
             });
 
         // Store data on the token
-        var token_data = {"id": item.id, "name": item.name};
-        $.data(this_token.get(0), "tokeninput", item);
+        var token_data = {"id": id, "name": value, "img": img};
+        $.data(this_token.get(0), "tokeninput", token_data);
 
         // Save this token for duplicate checking
         saved_tokens = saved_tokens.slice(0,selected_token_index).concat([token_data]).concat(saved_tokens.slice(selected_token_index));
         selected_token_index++;
 
         // Update the hidden input
-        var token_ids = $.map(saved_tokens, function (el) {
+        var token_ids = $.map(saved_tokens, function(el) {
             return el.id;
         });
         hidden_input.val(token_ids.join(settings.tokenDelimiter));
@@ -470,7 +469,7 @@ $.TokenList = function (input, url_or_data, settings) {
         }
 
         // Insert the new tokens
-        insert_token(item);
+        insert_token(li_data.id, li_data.name, li_data.img);
         checkTokenLimit();
 
         // Clear input box
@@ -608,6 +607,15 @@ $.TokenList = function (input, url_or_data, settings) {
     function highlight_term(value, term) {
         return value.replace(new RegExp("(?![^&;]+;)(?!<[^<>]*)(" + term + ")(?![^<>]*>)(?![^&;]+;)", "gi"), "<b>$1</b>");
     }
+    
+    // Compose image link used in dropdown and in the tokenizer
+    function compose_img_link(img) {
+        if(img == undefined) {
+          return "";
+        } else {
+          return "<img src=\"" + img + "\" style=\"vertical-align:middle;overflow:hidden;\" />";
+        }
+    }
 
     // Populate the results dropdown with some results
     function populate_dropdown (query, results) {
@@ -625,7 +633,7 @@ $.TokenList = function (input, url_or_data, settings) {
                 .hide();
 
             $.each(results, function(index, value) {
-                var this_li = $("<li>" + highlight_term(value.name, query) + "</li>")
+                var this_li = $("<li>" + compose_img_link(value.img) + "&nbsp;" + highlight_term(value.name, query) + "</li>")
                                   .appendTo(dropdown_ul);
 
                 if(index % 2) {
@@ -638,7 +646,7 @@ $.TokenList = function (input, url_or_data, settings) {
                     select_dropdown_item(this_li);
                 }
 
-                $.data(this_li.get(0), "tokeninput", value);
+                $.data(this_li.get(0), "tokeninput", {"id": value.id, "name": value.name, "img": value.img});
             });
 
             show_dropdown();
